@@ -7,6 +7,7 @@ My Mac setup: Homebrew, Colima + Docker, the GitHub CLI, Claude Code, uv for Pyt
 | `Brewfile` | iTerm2, Starship, the JetBrains Mono Nerd Font, gh, Claude Code, uv, Colima, Docker and Docker Compose |
 | `starship/starship.toml` | Prompt config |
 | `zsh/zshrc` | The line that turns on Starship |
+| `claude/settings.json` | Claude Code preferences: dark theme, no commit/PR attribution or session link, no idle compaction |
 | `iterm2/com.googlecode.iterm2.plist` | iTerm2 settings: profile, colors, font, Toolbelt |
 | `iterm2/spotify-toolbelt/` | Spotify now-playing panel (see its own README) |
 
@@ -52,6 +53,18 @@ The files are copied into place, not symlinked. After changing one in `~`, copy 
    ```
    More versions: `uv python install 3.12`, list them with `uv python list`, pin a project with `uv python pin 3.12`.
 7. Claude Code: run `claude` once to log in. The Homebrew cask doesn't update itself, so run `brew upgrade claude-code` now and then.
+
+   Then merge in the preferences from `claude/settings.json`. This merges rather than copies, because `~/.claude/settings.json` also holds hooks that iTerm2's Claude Code integration writes there with a machine-specific path. Keys from the repo win; everything else in the file is kept:
+   ```sh
+   mkdir -p ~/.claude
+   python3 -I - claude/settings.json ~/.claude/settings.json <<'EOF'
+   import json, os, sys
+   repo, dest = sys.argv[1], sys.argv[2]
+   d = json.load(open(dest)) if os.path.exists(dest) else {}
+   d.update(json.load(open(repo)))
+   json.dump(d, open(dest, 'w'), indent=2); open(dest, 'a').write('\n')
+   EOF
+   ```
 8. Starship. The `grep` stops the `starship init` line being added twice if you re-run this:
    ```sh
    mkdir -p ~/.config

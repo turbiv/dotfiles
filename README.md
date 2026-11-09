@@ -40,7 +40,7 @@ The files are copied into place, not symlinked. After changing one in `~`, copy 
    ```sh
    mkdir -p ~/.docker/cli-plugins
    ln -sfn "$(brew --prefix)/opt/docker-compose/bin/docker-compose" ~/.docker/cli-plugins/docker-compose
-   colima start --cpu 4 --memory 8 --vm-type vz --mount-type virtiofs
+   colima start --cpu 4 --memory 6 --vm-type vz --mount-type virtiofs
    docker run --rm hello-world
    docker compose version
    ```

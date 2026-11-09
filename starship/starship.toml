@@ -1,0 +1,37 @@
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Inserts a blank line between shell prompts
+add_newline = true
+
+# Disable the package module, hiding it from the prompt completely
+[package]
+disabled = true
+
+# Hide the docker context (always "colima" locally, so it's just noise)
+[docker_context]
+disabled = true
+
+# SF Mono has no Nerd Font glyphs, so use a plain Unicode hexagon instead of  (U+E718)
+[nodejs]
+symbol = '⬢ '
+
+# Show the exit code of the last failed command, not just a red prompt character.
+# pipestatus reports every stage of a pipeline, e.g. "1|0|0"
+[status]
+disabled = false
+pipestatus = true
+symbol = '✘ '   # default is the ❌ emoji, which ignores the style and is double-width
+
+# Speak up for anything slower than half a second (default is 2s)
+[cmd_duration]
+min_time = 500
+
+# Lines added/removed in the working tree, e.g. +42 -17
+[git_metrics]
+disabled = false
+
+# Renders on the second line next to the prompt character
+[time]
+disabled = false
+time_format = '%H:%M'

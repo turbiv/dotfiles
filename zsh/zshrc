@@ -1,0 +1,2 @@
+# Starship prompt (config lives in ~/.config/starship.toml)
+eval "$(starship init zsh)"

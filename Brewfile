@@ -6,6 +6,12 @@ cask "font-jetbrains-mono-nerd-font"
 # GitHub
 brew "gh"
 
+# Claude Code (the cask doesn't auto-update: brew upgrade claude-code)
+cask "claude-code"
+
+# Python: uv installs and manages Python versions
+brew "uv"
+
 # Containers: Colima runs the Docker engine in a VM
 brew "colima"
 brew "docker"

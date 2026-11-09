@@ -1,10 +1,10 @@
 # dotfiles
 
-My Mac setup: Homebrew, Colima + Docker, the GitHub CLI, iTerm2, the Starship prompt and a Spotify panel for the iTerm2 Toolbelt.
+My Mac setup: Homebrew, Colima + Docker, the GitHub CLI, Claude Code, uv for Python, iTerm2, the Starship prompt and a Spotify panel for the iTerm2 Toolbelt.
 
 | Path | What it is |
 |---|---|
-| `Brewfile` | iTerm2, Starship, the JetBrains Mono Nerd Font, gh, Colima, Docker and Docker Compose |
+| `Brewfile` | iTerm2, Starship, the JetBrains Mono Nerd Font, gh, Claude Code, uv, Colima, Docker and Docker Compose |
 | `starship/starship.toml` | Prompt config |
 | `zsh/zshrc` | The line that turns on Starship |
 | `iterm2/com.googlecode.iterm2.plist` | iTerm2 settings: profile, colors, font, Toolbelt |
@@ -44,13 +44,21 @@ The files are copied into place, not symlinked. After changing one in `~`, copy 
    docker run --rm hello-world
    docker compose version
    ```
-6. Starship. The `grep` stops the `starship init` line being added twice if you re-run this:
+   `colima start` saves these settings in `~/.colima/default/colima.yaml`; later a plain `colima start` reuses them.
+6. Python with uv. `--default` also creates `python` and `python3` in `~/.local/bin`, so they run uv's Python instead of Apple's `/usr/bin/python3`. Put that folder first on the PATH, then open a new terminal tab:
+   ```sh
+   uv python install --default
+   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zprofile
+   ```
+   More versions: `uv python install 3.12`, list them with `uv python list`, pin a project with `uv python pin 3.12`.
+7. Claude Code: run `claude` once to log in. The Homebrew cask doesn't update itself, so run `brew upgrade claude-code` now and then.
+8. Starship. The `grep` stops the `starship init` line being added twice if you re-run this:
    ```sh
    mkdir -p ~/.config
    cp starship/starship.toml ~/.config/starship.toml
    grep -qF 'starship init zsh' ~/.zshrc 2>/dev/null || cat zsh/zshrc >> ~/.zshrc
    ```
-7. iTerm2 settings. Quit iTerm2 first (⌘Q), because it overwrites its settings when it quits. Run this from Terminal.app or another app.
+9. iTerm2 settings. Quit iTerm2 first (⌘Q), because it overwrites its settings when it quits. Run this from Terminal.app or another app.
 
    `defaults import` replaces **all** iTerm2 settings. If iTerm2 has been opened on this Mac (for example to set up the Claude Code integration), back up its settings and merge them instead. The repo's settings win, but iTerm2's machine-local `NoSync*`/`NS*` keys and its newer Claude Code `Workgroups` are kept:
    ```sh
@@ -65,13 +73,13 @@ The files are copied into place, not symlinked. After changing one in `~`, copy 
    EOF
    defaults import com.googlecode.iterm2 "$B/merged.plist"
    ```
-8. Spotify panel. The Python API is already turned on by the iTerm2 settings above:
-   ```sh
-   mkdir -p ~/Library/Application\ Support/iTerm2/Scripts/AutoLaunch
-   cp iterm2/spotify-toolbelt/spotify_toolbelt.py ~/Library/Application\ Support/iTerm2/Scripts/AutoLaunch/
-   ```
-   Then follow steps 3–5 in `iterm2/spotify-toolbelt/README.md`.
-9. Open iTerm2.
+10. Spotify panel. The Python API is already turned on by the iTerm2 settings above:
+    ```sh
+    mkdir -p ~/Library/Application\ Support/iTerm2/Scripts/AutoLaunch
+    cp iterm2/spotify-toolbelt/spotify_toolbelt.py ~/Library/Application\ Support/iTerm2/Scripts/AutoLaunch/
+    ```
+    Then follow steps 3–5 in `iterm2/spotify-toolbelt/README.md`.
+11. Open iTerm2.
 
 ## Update the iTerm2 settings in this repo
 

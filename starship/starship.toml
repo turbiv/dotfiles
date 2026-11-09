@@ -12,7 +12,7 @@ disabled = true
 [docker_context]
 disabled = true
 
-# SF Mono has no Nerd Font glyphs, so use a plain Unicode hexagon instead of  (U+E718)
+# Plain Unicode hexagon, so it renders even in fonts without Nerd Font glyphs, instead of  (U+E718)
 [nodejs]
 symbol = '⬢ '
 

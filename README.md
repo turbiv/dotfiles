@@ -8,6 +8,7 @@ My Mac setup: Homebrew, Colima + Docker, the GitHub CLI, Claude Code, uv for Pyt
 | `starship/starship.toml` | Prompt config |
 | `zsh/zshrc` | The line that turns on Starship |
 | `claude/settings.json` | Claude Code preferences: dark theme, no commit/PR attribution or session link, no idle compaction |
+| `claude/context-band/` | A mod for the Claude apps: a band above the prompt with context fill, plan usage (5h/7d with resets) on a Pro/Max login or USD on an API key, and Spotify's current track |
 | `iterm2/com.googlecode.iterm2.plist` | iTerm2 settings: profile, colors, font, Toolbelt |
 | `iterm2/spotify-toolbelt/` | Spotify now-playing panel (see its own README) |
 
@@ -65,6 +66,14 @@ The files are copied into place, not symlinked. After changing one in `~`, copy 
    json.dump(d, open(dest, 'w'), indent=2); open(dest, 'a').write('\n')
    EOF
    ```
+   Then install the context band, with this folder as its marketplace:
+   ```sh
+   claude plugin marketplace add "$PWD"
+   claude plugin install context-band@dotfiles --scope user
+   ```
+   It decides per session how to show what you spend: signed in with claude.ai (Pro/Max) it shows the 5-hour and 7-day plan windows and when each resets; with an API key it shows the session's cost in USD. Its tests run with `claude plugin test claude/context-band`.
+
+   After changing the band, raise `version` in `claude/context-band/.claude-plugin/plugin.json`, run `claude plugin update context-band@dotfiles`, then `/reload-plugins` or start a new session: a session runs the installed copy, not this folder.
 8. Starship. The `grep` stops the `starship init` line being added twice if you re-run this:
    ```sh
    mkdir -p ~/.config

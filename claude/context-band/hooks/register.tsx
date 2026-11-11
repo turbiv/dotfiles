@@ -8,7 +8,7 @@ import type {
   Timer,
 } from 'claude-code'
 
-import type { Meter, Track } from '../types'
+import type { Billing, Limit, Meter, Track } from '../types'
 
 const meter = atom({ plugin: 'context-band', key: 'meter' } as const, null)
 const track = atom({ plugin: 'context-band', key: 'track' } as const, null)
@@ -48,6 +48,28 @@ const LIMIT_LABELS: Record<string, string> = {
   spend_limit: 'spend',
 }
 
+// The plan windows shown on a subscription, in this order, even before the
+// first response has reported a reading for them.
+const PLAN_WINDOWS = ['five_hour', 'seven_day']
+
+// Whether the session signs in with a bearer token (claude.ai login or an
+// OAuth token: a Pro/Max subscription) rather than an API key. Set at
+// session.start; a reload runs session.start again and sets it afresh.
+let isBearer = false
+
+const detectBilling = async ($: EngineInterface): Promise<void> => {
+  try {
+    isBearer = (await $.session.authorize())?.kind === 'bearer'
+  } catch {
+    isBearer = false
+  }
+}
+
+// A subscription is told by the rate-limit windows the API reports, which
+// only a subscription gets; before the first response, by the login kind.
+const billingOf = (rateLimits: SessionRateLimit[]): Billing =>
+  rateLimits.some(limit => PLAN_WINDOWS.includes(limit.kind)) || isBearer ? 'plan' : 'api'
+
 const toMeter = (
   context: SessionContextUsage,
   rateLimits: SessionRateLimit[],
@@ -57,8 +79,50 @@ const toMeter = (
   window: context.window,
   percent: context.percent ?? null,
   usd: cost?.usd ?? null,
-  limits: rateLimits.map(({ kind, percentUsed }) => ({ kind, percentUsed })),
+  billing: billingOf(rateLimits),
+  limits: rateLimits.map(({ kind, percentUsed, resetsAt }) => ({
+    kind,
+    percentUsed,
+    resetsAt: resetsAt ?? null,
+  })),
 })
+
+// On a subscription: the 5h and 7d windows first (a dash until read), then
+// any other window reported. On the API: whatever windows were reported
+// (a gateway's spend limit, say).
+const shownLimits = (m: Meter): Array<Limit | { kind: string; percentUsed: null; resetsAt: null }> => {
+  if (m.billing !== 'plan') {
+    return m.limits
+  }
+
+  const planned = PLAN_WINDOWS.map(
+    kind => m.limits.find(limit => limit.kind === kind) ?? { kind, percentUsed: null, resetsAt: null },
+  )
+
+  return [...planned, ...m.limits.filter(limit => !PLAN_WINDOWS.includes(limit.kind))]
+}
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+// When a window resets, in local time: the 5h window by its clock time
+// (15:00), the longer ones with the weekday too (Mon 15:00). Nothing once
+// the reset has passed, as the reading is stale until the next response.
+const resetLabel = (kind: string, resetsAt: string | null, now: number): string | null => {
+  if (resetsAt === null) {
+    return null
+  }
+
+  const at = Date.parse(resetsAt)
+
+  if (!Number.isFinite(at) || at <= now) {
+    return null
+  }
+
+  const date = new Date(at)
+  const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+
+  return kind === 'five_hour' ? time : `${WEEKDAYS[date.getDay()]} ${time}`
+}
 
 const compact = (tokens: number): string => {
   if (tokens >= 1_000_000) {
@@ -148,6 +212,7 @@ const startSpotify = ($: EngineInterface): void => {
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const result = await next(e)
+    await detectBilling($)
     const usage = await $.session.usage()
     await update($, meter, () => toMeter(usage.context, usage.rateLimits, usage.cost))
 
@@ -194,6 +259,7 @@ export const register: Register = on => {
     }
 
     const { Box, Text } = $.ui.resolve(e)
+    const now = await $.clock.now()
     const percent = m.percent ?? 0
     const filled = filledCells(percent)
     const color = level(percent)
@@ -201,7 +267,7 @@ export const register: Register = on => {
     return (
       <Box width="100%" justifyContent="space-between" columnGap={2}>
         <Text>
-          <Text dimColor>context </Text>
+          <Text>🧠 </Text>
           <Text mono color={color}>
             {BAR_GLYPH.repeat(filled)}
           </Text>
@@ -225,18 +291,28 @@ export const register: Register = on => {
             {m.tokens === null ? '' : ' / '}
             {compact(m.window)}
           </Text>
-          {m.limits.map(limit => (
-            <Text key={limit.kind}>
-              <Text dimColor>
-                {SEPARATOR}
-                {LIMIT_LABELS[limit.kind] ?? limit.kind}{' '}
+          {shownLimits(m).map(limit => {
+            const reset = resetLabel(limit.kind, limit.resetsAt, now)
+
+            return (
+              <Text key={limit.kind}>
+                <Text dimColor>
+                  {SEPARATOR}
+                  {LIMIT_LABELS[limit.kind] ?? limit.kind}{' '}
+                </Text>
+                {limit.percentUsed === null ? (
+                  <Text dimColor>–</Text>
+                ) : (
+                  <Text tabular color={level(limit.percentUsed)}>
+                    {`${Math.round(limit.percentUsed)}%`}
+                  </Text>
+                )}
+                {reset === null ? null : <Text dimColor>{` ↻ ${reset}`}</Text>}
               </Text>
-              <Text tabular color={level(limit.percentUsed)}>
-                {`${Math.round(limit.percentUsed)}%`}
-              </Text>
-            </Text>
-          ))}
-          {m.usd === null ? null : (
+            )
+          })}
+          {/* USD only on API billing: on a subscription it is not what is paid. */}
+          {m.billing === 'plan' || m.usd === null ? null : (
             <Text>
               <Text dimColor>{SEPARATOR}</Text>
               <Text tabular color="suggestion">

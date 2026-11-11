@@ -1,0 +1,11 @@
+{
+  "name": "dotfiles",
+  "owner": { "name": "turbiv" },
+  "plugins": [
+    {
+      "name": "context-band",
+      "source": "./claude/context-band",
+      "description": "Band above the prompt in the Claude apps: context fill, plan usage or USD, and Spotify's current track"
+    }
+  ]
+}

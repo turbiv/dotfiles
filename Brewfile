@@ -6,6 +6,9 @@ cask "font-jetbrains-mono-nerd-font"
 # GitHub
 brew "gh"
 
+# JSON on the command line (Claude Code's status line uses it)
+brew "jq"
+
 # Claude Code (the cask doesn't auto-update: brew upgrade claude-code)
 cask "claude-code"
 

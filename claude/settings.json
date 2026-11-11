@@ -5,5 +5,25 @@
     "pr": "",
     "sessionUrl": false
   },
-  "idleCompaction": false
+  "idleCompaction": false,
+  "autoCompactEnabled": false,
+  "model": "opus",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "xhigh"
+    }
+  },
+  "switchModelsOnFlag": false,
+  "tui": "fullscreen",
+  "enableWorkflows": true,
+  "skipWorkflowUsageWarning": true,
+  "feedbackDrafts": "off",
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-command.sh"
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "claude-security@claude-plugins-official": true
+  }
 }
